@@ -10,6 +10,7 @@
 以下词汇调查表大部分参照：
 
 Castro, A. & Hansen, B. (2010)
+
 [Hongshui He Zhuang Dialect Intelligibility Survey](https://www.researchgate.net/publication/259470013_Hongshui_He_Zhuang_dialect_intelligibility_survey)
 
 [红水河流域壮语方言通解度调查(中文版)](https://www.sil.org/system/files/reapdata/14/30/76/143076809909369929440550250489014050575/silesr2010_025_Chinese.pdf)
