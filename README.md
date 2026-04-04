@@ -32,7 +32,7 @@ Castro, A. & Hansen, B. (2010)
 ## 词汇
 标准壮语为[此字典](http://www.jiu60.com/hoiz/hing.asp)能查到的词汇，以壮语拼音的形式呈现。东兰大同的音为我自己收集我奶奶(1959年生)的语音数据，大化岩滩和大化流水的音则为Castro & Hansen(2010)论文里的数据，仅供对比。
 
-完整版511个词汇[点这里](https://yqq-0312.github.io/savemyzhuang/)
+带音频的词汇表[点这里](https://yuqiqin-a.github.io/savemyzhuang/)（慢慢搭建中）
 
 
 ## 其他词汇
