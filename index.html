@@ -428,6 +428,11 @@
       align-items: center;
       gap: 12px;
     }
+    .value-inline--standard {
+      width: 100%;
+      align-items: center;
+      gap: 12px;
+    }
     .value-copy {
       display: grid;
       gap: 4px;
@@ -544,14 +549,6 @@
     .loading-state { font-size: 1rem; }
     .hidden { display: none !important; }
 
-    .footer-note {
-      margin-top: 24px;
-      color: var(--muted);
-      line-height: 1.7;
-      text-align: center;
-      font-size: 0.95rem;
-    }
-
     @media (max-width: 1120px) {
       .hero { grid-template-columns: 1fr; }
       .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -564,7 +561,8 @@
       .cards { grid-template-columns: 1fr; }
       .results-bar { align-items: flex-start; flex-direction: column; }
       .pronunciation-row { grid-template-columns: 1fr; gap: 6px; }
-      .value-inline--thai { align-items: center; flex-direction: row; }
+      .value-inline--thai,
+      .value-inline--standard { align-items: center; flex-direction: row; }
       .word-top { padding-right: 0; min-height: 0; }
       .tag-rack {
         position: static;
@@ -760,6 +758,152 @@
       return `<span class="value">${escapeHtml(value)}</span>`;
     }
 
+    const STANDARD_ZHUANG_SYLLABLE = /^(?<onset>ngv|nd|ng|ny|mb|gv|gy|by|my|mw|fw|bw|dw|cw|sw|b|c|d|f|g|h|l|m|n|r|s|v|y)?(?<nucleus>[aeiouyw]+)(?:(?<sonorant>ng|[mnwy])(?<tone>[zjxqh])?|(?<openSonorant>ng|[mnwy])|(?<stop>[ptkbdg])|(?<openTone>[zjxqh])?)$/;
+    const STANDARD_ZHUANG_ONSETS = {
+      '': '',
+      b: 'b',
+      by: 'by',
+      bw: 'bw',
+      c: 'c',
+      cw: 'cw',
+      d: 'd',
+      dw: 'dw',
+      f: 'f',
+      fw: 'fw',
+      g: 'g',
+      gv: 'gw',
+      gy: 'gy',
+      h: 'h',
+      l: 'l',
+      m: 'm',
+      mb: 'mb',
+      mw: 'mw',
+      my: 'my',
+      n: 'n',
+      nd: 'nd',
+      ng: 'ng',
+      ngv: 'ngw',
+      ny: 'ny',
+      r: 'r',
+      s: 's',
+      sw: 'sw',
+      v: 'w',
+      y: 'y'
+    };
+    const standardSegmentationCache = new Map();
+
+    function parseStandardZhuangSyllable(value) {
+      const match = String(value || '').toLowerCase().match(STANDARD_ZHUANG_SYLLABLE);
+      if (!match || !match.groups || match.groups.nucleus === 'y') return null;
+      return {
+        onset: match.groups.onset || '',
+        nucleus: match.groups.nucleus || '',
+        sonorant: match.groups.sonorant || match.groups.openSonorant || '',
+        tone: match.groups.tone || match.groups.openTone || '',
+        stop: match.groups.stop || ''
+      };
+    }
+
+    function splitStandardZhuangToken(token) {
+      const lower = String(token || '').trim().toLowerCase();
+      if (!lower) return [];
+      if (standardSegmentationCache.has(lower)) return standardSegmentationCache.get(lower);
+
+      const memo = new Map();
+      const walk = (index) => {
+        if (index === lower.length) return { cost: 0, pieces: [] };
+        if (memo.has(index)) return memo.get(index);
+
+        let best = null;
+        for (let end = index + 1; end <= lower.length; end += 1) {
+          const piece = lower.slice(index, end);
+          const parsed = parseStandardZhuangSyllable(piece);
+          if (!parsed) continue;
+          const rest = walk(end);
+          if (!rest) continue;
+
+          const cost = (parsed.stop ? 1 : 0) + (index > 0 && !parsed.onset ? 2 : 0);
+          const candidate = { cost: cost + rest.cost, pieces: [piece, ...rest.pieces] };
+
+          if (!best || candidate.cost < best.cost || (candidate.cost === best.cost && candidate.pieces.length > best.pieces.length)) {
+            best = candidate;
+          }
+        }
+
+        memo.set(index, best);
+        return best;
+      };
+
+      const resolved = walk(0);
+      const pieces = resolved ? resolved.pieces : [lower];
+      standardSegmentationCache.set(lower, pieces);
+      return pieces;
+    }
+
+    function standardToneNumber(parsed) {
+      if (parsed.stop && ['p', 't', 'k'].includes(parsed.stop)) return '55';
+      if (parsed.stop && ['b', 'd', 'g'].includes(parsed.stop)) return '33';
+      return {
+        '': '24',
+        z: '31',
+        x: '42',
+        q: '35',
+        h: '33',
+        j: '55'
+      }[parsed.tone || ''] || '24';
+    }
+
+    function romanizeStandardZhuangNucleus(nucleus) {
+      return String(nucleus || '')
+        .replaceAll('ae', 'a')
+        .replaceAll('oe', 'oe')
+        .replaceAll('w', 'ue')
+        .replaceAll('v', 'w');
+    }
+
+    function romanizeStandardZhuangSyllable(syllable) {
+      const parsed = parseStandardZhuangSyllable(syllable);
+      if (!parsed) return syllable;
+      const onset = STANDARD_ZHUANG_ONSETS[parsed.onset] || parsed.onset;
+      const nucleus = romanizeStandardZhuangNucleus(parsed.nucleus);
+      const sonorant = ({
+        y: 'i',
+        w: 'u',
+        ng: 'ng'
+      })[parsed.sonorant] || parsed.sonorant;
+      const stop = ({
+        b: 'p',
+        d: 't',
+        g: 'k'
+      })[parsed.stop] || parsed.stop;
+      return `${onset}${nucleus}${sonorant}${stop}${standardToneNumber(parsed)}`;
+    }
+
+    function standardZhuangPronunciation(value) {
+      if (!value) return '';
+      return String(value)
+        .trim()
+        .split(/\s+/)
+        .flatMap((token) => splitStandardZhuangToken(token).map((syllable) => romanizeStandardZhuangSyllable(syllable)))
+        .join(' ');
+    }
+
+    function standardValueMarkup(word) {
+      if (!word.standard && !word.standardPronunciation) return '<span class="value empty">暂无记录</span>';
+      const lines = [];
+      if (word.standard) {
+        lines.push(`<span class="value">${escapeHtml(word.standard)}</span>`);
+      }
+      if (word.standardPronunciation) {
+        lines.push(`<span class="value-meta">${escapeHtml(word.standardPronunciation)}</span>`);
+      }
+      return `
+        <div class="value-inline value-inline--standard">
+          <div class="value-copy value-copy--thai">${lines.join('')}</div>
+        </div>
+      `;
+    }
+
     function sanitizeFilenamePart(value) {
       return String(value || '')
         .trim()
@@ -914,6 +1058,7 @@
         word.english,
         word.englishGloss,
         word.standard,
+        word.standardPronunciation,
         word.modernThai,
         word.modernThaiRomanization,
         word.donglan,
@@ -949,7 +1094,7 @@
               ${tagMarkup(word)}
             </div>
             <div class="pronunciations">
-              <div class="pronunciation-row"><div class="label">标准壮语</div><div>${valueMarkup(word.standard)}</div></div>
+              <div class="pronunciation-row"><div class="label">标准壮语</div><div>${standardValueMarkup(word)}</div></div>
               <div class="pronunciation-row"><div class="label">现代泰语</div><div>${thaiValueMarkup(word, { withAudio: true })}</div></div>
               <div class="pronunciation-row"><div class="label">大化岩滩</div><div>${valueMarkup(word.yantan)}</div></div>
               <div class="pronunciation-row"><div class="label">大化流水</div><div>${valueMarkup(word.liushui)}</div></div>
@@ -971,7 +1116,7 @@
         <tr>
           <td>${escapeHtml(word.id)}</td>
           <td>${escapeHtml(word.chinese)}</td>
-          <td>${valueMarkup(word.standard)}</td>
+          <td>${standardValueMarkup(word)}</td>
           <td>${thaiValueMarkup(word)}</td>
           <td>${valueMarkup(word.yantan)}</td>
           <td>${valueMarkup(word.liushui)}</td>
@@ -1030,7 +1175,10 @@
     }
 
     function boot() {
-      const words = window.WORDS_DATA;
+      const words = (window.WORDS_DATA || []).map((word) => ({
+        ...word,
+        standardPronunciation: standardZhuangPronunciation(word.standard)
+      }));
       const audioManifest = window.AUDIO_MANIFEST_DATA;
       if (!words || !audioManifest) {
         resultsCopy.textContent = '页面数据尚未加载完成，请稍后刷新重试。';
