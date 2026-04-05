@@ -422,6 +422,63 @@
       gap: 8px;
       align-items: baseline;
     }
+    .value-inline--thai {
+      width: 100%;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .value-copy {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
+    .value-copy--thai {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: nowrap;
+    }
+    .value-copy .value,
+    .value-copy .value-meta {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .play-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: 999px;
+      border: 1px solid rgba(29, 97, 214, 0.22);
+      background: #2f6fe4;
+      color: #fff;
+      cursor: pointer;
+      transition: 180ms ease;
+    }
+    .play-link:hover {
+      transform: translateY(-1px);
+      background: #245dcb;
+      border-color: rgba(29, 97, 214, 0.34);
+    }
+    .play-link:focus-visible {
+      outline: 2px solid rgba(47, 111, 228, 0.28);
+      outline-offset: 2px;
+    }
+    .play-link.is-playing {
+      background: #174fb8;
+    }
+    .play-link svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
     .value-block { display: grid; gap: 8px; }
     .grouped-block {
       display: grid;
@@ -507,6 +564,7 @@
       .cards { grid-template-columns: 1fr; }
       .results-bar { align-items: flex-start; flex-direction: column; }
       .pronunciation-row { grid-template-columns: 1fr; gap: 6px; }
+      .value-inline--thai { align-items: center; flex-direction: row; }
       .word-top { padding-right: 0; min-height: 0; }
       .tag-rack {
         position: static;
@@ -657,6 +715,8 @@
     const loadingState = document.getElementById('loading-state');
     const paginationTop = document.getElementById('pagination-top');
     const paginationBottom = document.getElementById('pagination-bottom');
+    const thaiAudioPlayer = new Audio();
+    let activeThaiPlayButton = null;
 
     function escapeHtml(value) {
       return String(value)
@@ -700,7 +760,82 @@
       return `<span class="value">${escapeHtml(value)}</span>`;
     }
 
-    function thaiValueMarkup(word) {
+    function sanitizeFilenamePart(value) {
+      return String(value || '')
+        .trim()
+        .replace(/[\\/:*?"<>|]/g, '_')
+        .replace(/\s+/g, ' ') || '_';
+    }
+
+    function modernThaiAudioPath(word) {
+      if (!word.modernThai) return '';
+      const numericId = String(parseInt(word.id, 10) || word.id);
+      const fileName = `${sanitizeFilenamePart(numericId)}_${sanitizeFilenamePart(word.modernThai)}_${sanitizeFilenamePart(word.chinese)}.wav`;
+      return encodeAudioPath(`wav/modern_thai/${fileName}`);
+    }
+
+    function modernThaiAudioMarkup(word) {
+      const path = modernThaiAudioPath(word);
+      if (!path) return '';
+      return `
+        <button
+          type="button"
+          class="play-link"
+          data-thai-audio="${path}"
+          aria-label="播放现代泰语录音：${escapeHtml(word.modernThai)}"
+          aria-pressed="false"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 6.8v10.4c0 .66.73 1.06 1.28.7l8.15-5.2a.83.83 0 0 0 0-1.4L9.28 6.1A.83.83 0 0 0 8 6.8z"/>
+          </svg>
+        </button>
+      `;
+    }
+
+    function setActiveThaiPlayButton(button) {
+      if (activeThaiPlayButton && activeThaiPlayButton !== button) {
+        activeThaiPlayButton.classList.remove('is-playing');
+        activeThaiPlayButton.setAttribute('aria-pressed', 'false');
+      }
+      activeThaiPlayButton = button;
+      if (activeThaiPlayButton) {
+        activeThaiPlayButton.classList.add('is-playing');
+        activeThaiPlayButton.setAttribute('aria-pressed', 'true');
+      }
+    }
+
+    function clearActiveThaiPlayButton() {
+      if (!activeThaiPlayButton) return;
+      activeThaiPlayButton.classList.remove('is-playing');
+      activeThaiPlayButton.setAttribute('aria-pressed', 'false');
+      activeThaiPlayButton = null;
+    }
+
+    function playModernThaiAudio(rawPath, button) {
+      const resolvedUrl = new URL(rawPath, document.baseURI).href;
+      const isSameSource = thaiAudioPlayer.src === resolvedUrl;
+      const isPlaying = !thaiAudioPlayer.paused && !thaiAudioPlayer.ended;
+
+      if (isSameSource && isPlaying) {
+        thaiAudioPlayer.pause();
+        thaiAudioPlayer.currentTime = 0;
+        clearActiveThaiPlayButton();
+        return;
+      }
+
+      thaiAudioPlayer.pause();
+      thaiAudioPlayer.currentTime = 0;
+      thaiAudioPlayer.src = resolvedUrl;
+      thaiAudioPlayer.load();
+      setActiveThaiPlayButton(button);
+
+      thaiAudioPlayer.play().catch(() => {
+        clearActiveThaiPlayButton();
+      });
+    }
+
+    function thaiValueMarkup(word, options = {}) {
+      const { withAudio = false } = options;
       if (!word.modernThai && !word.modernThaiRomanization) return '<span class="value empty">暂无记录</span>';
 
       const lines = [];
@@ -710,7 +845,12 @@
       if (word.modernThaiRomanization) {
         lines.push(`<span class="value-meta">${escapeHtml(word.modernThaiRomanization)}</span>`);
       }
-      return `<div class="value-inline">${lines.join('')}</div>`;
+      return `
+        <div class="value-inline value-inline--thai">
+          <div class="value-copy value-copy--thai">${lines.join('')}</div>
+          ${withAudio ? modernThaiAudioMarkup(word) : ''}
+        </div>
+      `;
     }
 
     function donglanSectionMarkup(word) {
@@ -810,7 +950,7 @@
             </div>
             <div class="pronunciations">
               <div class="pronunciation-row"><div class="label">标准壮语</div><div>${valueMarkup(word.standard)}</div></div>
-              <div class="pronunciation-row"><div class="label">现代泰语</div><div>${thaiValueMarkup(word)}</div></div>
+              <div class="pronunciation-row"><div class="label">现代泰语</div><div>${thaiValueMarkup(word, { withAudio: true })}</div></div>
               <div class="pronunciation-row"><div class="label">大化岩滩</div><div>${valueMarkup(word.yantan)}</div></div>
               <div class="pronunciation-row"><div class="label">大化流水</div><div>${valueMarkup(word.liushui)}</div></div>
               <div>${donglanSectionMarkup(word)}</div>
@@ -870,6 +1010,9 @@
 
     function render() {
       if (!state.loaded) return;
+      if (activeThaiPlayButton && !activeThaiPlayButton.isConnected) {
+        activeThaiPlayButton = null;
+      }
       loadingState.classList.add('hidden');
 
       const filtered = state.words.filter(matches);
@@ -929,7 +1072,17 @@
       render();
     });
     viewPicker.addEventListener('click', (event) => { const button = event.target.closest('button[data-view]'); if (!button) return; state.view = button.dataset.view; render(); });
+    thaiAudioPlayer.addEventListener('ended', clearActiveThaiPlayButton);
+    thaiAudioPlayer.addEventListener('pause', () => {
+      if (thaiAudioPlayer.ended) return;
+      clearActiveThaiPlayButton();
+    });
     document.addEventListener('click', (event) => {
+      const thaiAudioButton = event.target.closest('button[data-thai-audio]');
+      if (thaiAudioButton) {
+        playModernThaiAudio(thaiAudioButton.dataset.thaiAudio, thaiAudioButton);
+        return;
+      }
       const speakerButton = event.target.closest('button[data-speaker-switch]');
       if (speakerButton) {
         state.activeWordSpeakers[speakerButton.dataset.wordId] = speakerButton.dataset.speakerSwitch;
