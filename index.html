@@ -253,7 +253,7 @@
       background: rgba(255,255,255,0.72);
     }
 
-    .segmented button, .chip-button, .page-button {
+    .segmented button, .page-button {
       border: 0;
       border-radius: 999px;
       background: transparent;
@@ -265,7 +265,7 @@
       transition: 180ms ease;
     }
 
-    .segmented button.active, .chip-button.active, .page-button.active {
+    .segmented button.active, .page-button.active {
       background: var(--accent);
       color: #fff;
       box-shadow: 0 10px 22px rgba(29, 107, 95, 0.22);
@@ -277,6 +277,75 @@
     }
 
     .page-button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .page-jump {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: text;
+    }
+
+    .page-input {
+      width: 4ch;
+      min-width: 46px;
+      padding: 2px 4px;
+      border: 1px solid rgba(255,255,255,0.44);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.18);
+      color: inherit;
+      font: inherit;
+      font-weight: 800;
+      text-align: center;
+      outline: none;
+    }
+
+    .page-input:focus {
+      background: rgba(255,255,255,0.28);
+      border-color: rgba(255,255,255,0.82);
+    }
+
+    .word-card:hover,
+    .word-card:focus-within {
+      z-index: 20;
+    }
+
+    .tooltip-term {
+      position: relative;
+      cursor: help;
+      text-decoration: underline;
+      text-decoration-style: dotted;
+      text-underline-offset: 3px;
+    }
+
+    .tooltip-term::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      z-index: 30;
+      width: max-content;
+      max-width: 220px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(45, 36, 28, 0.94);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.35;
+      text-align: left;
+      white-space: normal;
+      box-shadow: 0 12px 24px rgba(45, 36, 28, 0.18);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 4px);
+      transition: 160ms ease;
+    }
+
+    .tooltip-term:hover::after,
+    .tooltip-term:focus-visible::after {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
 
     .toggle {
       display: inline-flex;
@@ -354,6 +423,8 @@
     }
 
     .word-card {
+      position: relative;
+      z-index: 0;
       border-radius: 24px;
       padding: 20px;
       display: flex;
@@ -378,6 +449,7 @@
       position: absolute;
       top: 0;
       right: 0;
+      z-index: 2;
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
@@ -499,25 +571,89 @@
       padding: 0;
       border-bottom: 0;
     }
-    .speaker-stack { display: flex; flex-wrap: wrap; gap: 8px; }
-
-    .chip-button {
-      padding: 8px 12px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,0.76);
-      font-size: 0.9rem;
-    }
-
     .audio-box {
       margin-top: 2px;
-      padding: 0;
-      border-radius: 0;
-      background: transparent;
-      border: 0;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
     }
 
-    .audio-box p { margin: 0 0 10px; color: var(--muted); font-size: 0.92rem; line-height: 1.6; }
-    .audio-box p:last-child { margin-bottom: 0; }
+    .recording-button {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr);
+      align-items: center;
+      column-gap: 9px;
+      min-width: 0;
+      padding: 8px 10px;
+      border-radius: 15px;
+      border: 1px solid rgba(29, 107, 95, 0.16);
+      background: rgba(255,255,255,0.72);
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      box-shadow: 0 8px 18px rgba(58, 45, 34, 0.07);
+      transition: 180ms ease;
+    }
+
+    .recording-button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(29, 107, 95, 0.34);
+      background: rgba(255,255,255,0.9);
+    }
+
+    .recording-button:focus-visible {
+      outline: 2px solid rgba(29, 107, 95, 0.28);
+      outline-offset: 2px;
+    }
+
+    .recording-button.is-playing {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(29, 107, 95, 0.22);
+    }
+
+    .recording-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: rgba(29, 107, 95, 0.1);
+      color: var(--accent-strong);
+    }
+
+    .recording-button.is-playing .recording-icon {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+    }
+
+    .recording-icon svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .recording-speaker {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 1px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.95rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .recording-index {
+      font-size: 0.62em;
+      font-weight: 800;
+      line-height: 1;
+      transform: translateY(0.24em);
+    }
+
     audio {
       width: 100%;
       display: block;
@@ -573,6 +709,11 @@
       th, td { padding: 12px; }
       .table-shell { overflow-x: auto; }
       table { min-width: 1120px; }
+      .audio-box { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 460px) {
+      .audio-box { grid-template-columns: 1fr; }
     }
   </style>
   <script defer src="data/words.js"></script>
@@ -672,8 +813,13 @@
 
   <script>
     const PAGE_SIZE = 24;
+    const SPEAKER_LABELS = {
+      speaker1: '父亲',
+      speaker2: '奶奶'
+    };
+    const SWADESH_DESCRIPTION = '用于跨语言比较基础词汇的核心词表。';
     const TAG_DEFINITIONS = [
-      { key: 'swadesh', label: '斯沃德什', source: 'Swadesh List', color: ['#7f3b2e', '#fff4ef', '#c98b7d'] },
+      { key: 'swadesh', label: 'Swadesh', source: 'Swadesh List', color: ['#7f3b2e', '#fff4ef', '#c98b7d'], description: SWADESH_DESCRIPTION },
       { key: 'animal', label: '动物', source: '动物', color: ['#335c67', '#eff8fb', '#88afb9'] },
       { key: 'plant', label: '植物', source: '植物', color: ['#436b2f', '#f4faef', '#9cbc87'] },
       { key: 'pronoun', label: '人称代词', source: '人称代词', color: ['#6f4ba0', '#f7f1ff', '#c5afe7'] },
@@ -693,7 +839,6 @@
       search: '',
       selectedSpeakers: [],
       selectedTags: [],
-      activeWordSpeakers: {},
       view: 'cards',
       page: 1,
       loaded: false
@@ -714,7 +859,9 @@
     const paginationTop = document.getElementById('pagination-top');
     const paginationBottom = document.getElementById('pagination-bottom');
     const thaiAudioPlayer = new Audio();
+    const donglanAudioPlayer = new Audio();
     let activeThaiPlayButton = null;
+    let activeDonglanPlayButton = null;
 
     function escapeHtml(value) {
       return String(value)
@@ -730,7 +877,7 @@
     }
 
     function labelForSpeaker(key) {
-      return (state.audioManifest[key] && state.audioManifest[key].label) || key;
+      return SPEAKER_LABELS[key] || (state.audioManifest[key] && state.audioManifest[key].label) || key;
     }
 
     function wordTags(word) {
@@ -742,15 +889,61 @@
       return `color:${text};background:${bg};border-color:${border};`;
     }
 
-    function availableSpeakers(wordId) {
-      return state.speakerOrder.filter((speaker) => state.audioManifest[speaker] && state.audioManifest[speaker].files && state.audioManifest[speaker].files[wordId]);
+    function tagLabelMarkup(tag) {
+      const label = escapeHtml(tag.label);
+      if (!tag.description) return label;
+      return `<span class="tooltip-term" tabindex="0" data-tooltip="${escapeHtml(tag.description)}" title="${escapeHtml(tag.description)}">${label}</span>`;
+    }
+
+    function normalizeAudioFiles(value) {
+      if (!value) return [];
+      if (typeof value === 'string') return [{ path: value, label: '' }];
+      if (Array.isArray(value)) {
+        return value.flatMap((item) => normalizeAudioFiles(item));
+      }
+      if (typeof value === 'object') {
+        if (typeof value.path === 'string') return [{ path: value.path, label: value.label || value.name || '' }];
+        if (typeof value.file === 'string') return [{ path: value.file, label: value.label || value.name || '' }];
+        if (typeof value.url === 'string') return [{ path: value.url, label: value.label || value.name || '' }];
+        if (typeof value.src === 'string') return [{ path: value.src, label: value.label || value.name || '' }];
+        if (Array.isArray(value.paths)) return value.paths.flatMap((item) => normalizeAudioFiles(item));
+        if (Array.isArray(value.files)) return value.files.flatMap((item) => normalizeAudioFiles(item));
+        return Object.entries(value)
+          .filter(([key]) => !['label', 'name'].includes(key))
+          .flatMap(([, item]) => normalizeAudioFiles(item));
+      }
+      return [];
+    }
+
+    function audioEntriesForSpeaker(speaker, wordId) {
+      const manifest = state.audioManifest[speaker];
+      const rawValue = manifest && manifest.files && manifest.files[wordId];
+      return normalizeAudioFiles(rawValue).filter((item) => item.path);
+    }
+
+    function recordingCountForSpeaker(speaker) {
+      const manifest = state.audioManifest[speaker];
+      if (!manifest || !manifest.files) return 0;
+      return Object.values(manifest.files).reduce((count, value) => count + normalizeAudioFiles(value).length, 0);
+    }
+
+    function audioEntriesForWord(wordId) {
+      return state.speakerOrder.flatMap((speaker) => {
+        const recordings = audioEntriesForSpeaker(speaker, wordId);
+        return recordings.map((recording, index) => ({
+          speaker,
+          speakerLabel: labelForSpeaker(speaker),
+          path: encodeAudioPath(recording.path),
+          customLabel: recording.label,
+          index,
+          total: recordings.length
+        }));
+      });
     }
 
     function hasAllSelectedSpeakers(wordId) {
       if (!state.selectedSpeakers.length) return true;
-      return state.selectedSpeakers.every((speaker) => (
-        state.audioManifest[speaker] && state.audioManifest[speaker].files && state.audioManifest[speaker].files[wordId]
-      ));
+      return state.selectedSpeakers.every((speaker) => audioEntriesForSpeaker(speaker, wordId).length);
     }
 
     function valueMarkup(value) {
@@ -955,6 +1148,37 @@
       activeThaiPlayButton = null;
     }
 
+    function setActiveDonglanPlayButton(button) {
+      if (activeDonglanPlayButton && activeDonglanPlayButton !== button) {
+        activeDonglanPlayButton.classList.remove('is-playing');
+        activeDonglanPlayButton.setAttribute('aria-pressed', 'false');
+      }
+      activeDonglanPlayButton = button;
+      if (activeDonglanPlayButton) {
+        activeDonglanPlayButton.classList.add('is-playing');
+        activeDonglanPlayButton.setAttribute('aria-pressed', 'true');
+      }
+    }
+
+    function clearActiveDonglanPlayButton() {
+      if (!activeDonglanPlayButton) return;
+      activeDonglanPlayButton.classList.remove('is-playing');
+      activeDonglanPlayButton.setAttribute('aria-pressed', 'false');
+      activeDonglanPlayButton = null;
+    }
+
+    function stopThaiAudio() {
+      thaiAudioPlayer.pause();
+      thaiAudioPlayer.currentTime = 0;
+      clearActiveThaiPlayButton();
+    }
+
+    function stopDonglanAudio() {
+      donglanAudioPlayer.pause();
+      donglanAudioPlayer.currentTime = 0;
+      clearActiveDonglanPlayButton();
+    }
+
     function playModernThaiAudio(rawPath, button) {
       const resolvedUrl = new URL(rawPath, document.baseURI).href;
       const isSameSource = thaiAudioPlayer.src === resolvedUrl;
@@ -967,6 +1191,7 @@
         return;
       }
 
+      stopDonglanAudio();
       thaiAudioPlayer.pause();
       thaiAudioPlayer.currentTime = 0;
       thaiAudioPlayer.src = resolvedUrl;
@@ -975,6 +1200,30 @@
 
       thaiAudioPlayer.play().catch(() => {
         clearActiveThaiPlayButton();
+      });
+    }
+
+    function playDonglanAudio(rawPath, button) {
+      const resolvedUrl = new URL(rawPath, document.baseURI).href;
+      const isSameSource = donglanAudioPlayer.src === resolvedUrl;
+      const isPlaying = !donglanAudioPlayer.paused && !donglanAudioPlayer.ended;
+
+      if (isSameSource && isPlaying) {
+        donglanAudioPlayer.pause();
+        donglanAudioPlayer.currentTime = 0;
+        clearActiveDonglanPlayButton();
+        return;
+      }
+
+      stopThaiAudio();
+      donglanAudioPlayer.pause();
+      donglanAudioPlayer.currentTime = 0;
+      donglanAudioPlayer.src = resolvedUrl;
+      donglanAudioPlayer.load();
+      setActiveDonglanPlayButton(button);
+
+      donglanAudioPlayer.play().catch(() => {
+        clearActiveDonglanPlayButton();
       });
     }
 
@@ -1007,25 +1256,35 @@
     }
 
     function audioMarkup(wordId) {
-      const available = availableSpeakers(wordId);
-      if (!available.length) {
+      const recordings = audioEntriesForWord(wordId);
+      if (!recordings.length) {
         return '';
       }
 
-      const rememberedSpeaker = state.activeWordSpeakers[wordId];
-      const activeSpeaker = available.includes(rememberedSpeaker) ? rememberedSpeaker : available[0];
-      const rawPath = state.audioManifest[activeSpeaker] && state.audioManifest[activeSpeaker].files[wordId];
-      const currentPath = rawPath ? encodeAudioPath(rawPath) : null;
-      const chips = available.map((speaker) => (
-        `<button type="button" class="chip-button ${speaker === activeSpeaker ? 'active' : ''}" data-speaker-switch="${speaker}" data-word-id="${wordId}">${labelForSpeaker(speaker)}</button>`
-      )).join('');
+      const buttons = recordings.map((recording) => {
+        const speakerIndex = recording.total > 1 ? String(recording.index + 1) : '';
+        const ariaLabel = `播放${recording.speakerLabel}${recording.total > 1 ? `第 ${recording.index + 1} 段` : ''}录音`;
+        return `
+          <button
+            type="button"
+            class="recording-button"
+            data-donglan-audio="${escapeHtml(recording.path)}"
+            aria-label="${escapeHtml(ariaLabel)}"
+            aria-pressed="false"
+          >
+            <span class="recording-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 6.8v10.4c0 .66.73 1.06 1.28.7l8.15-5.2a.83.83 0 0 0 0-1.4L9.28 6.1A.83.83 0 0 0 8 6.8z"/>
+              </svg>
+            </span>
+            <span class="recording-speaker">${escapeHtml(recording.speakerLabel)}${speakerIndex ? `<span class="recording-index">${escapeHtml(speakerIndex)}</span>` : ''}</span>
+          </button>
+        `;
+      }).join('');
 
       return `
-        <div class="audio-box">
-          <div class="speaker-stack">${chips}</div>
-          <audio controls preload="none">
-            <source src="${currentPath}" type="audio/wav">
-          </audio>
+        <div class="audio-box" aria-label="可播放录音">
+          ${buttons}
         </div>
       `;
     }
@@ -1036,7 +1295,7 @@
       const chips = tags.map((tagKey) => {
         const definition = TAG_DEFINITIONS.find((item) => item.key === tagKey);
         if (!definition) return '';
-        return `<span class="tag-pill" style="${badgeStyle(definition)}">${escapeHtml(definition.label)}</span>`;
+        return `<span class="tag-pill" style="${badgeStyle(definition)}">${tagLabelMarkup(definition)}</span>`;
       }).join('');
       return chips ? `<div class="tag-rack" aria-label="词条标签">${chips}</div>` : '';
     }
@@ -1127,13 +1386,13 @@
 
     function renderSpeakerButtons() {
       speakerPicker.innerHTML = state.speakerOrder.map((speaker) => (
-        `<label class="toggle"><input type="checkbox" data-speaker="${speaker}" ${state.selectedSpeakers.includes(speaker) ? 'checked' : ''}><span class="toggle-box" aria-hidden="true"></span><span>${labelForSpeaker(speaker)} (${state.audioManifest[speaker].count})</span></label>`
+        `<label class="toggle"><input type="checkbox" data-speaker="${speaker}" ${state.selectedSpeakers.includes(speaker) ? 'checked' : ''}><span class="toggle-box" aria-hidden="true"></span><span>${labelForSpeaker(speaker)} (${recordingCountForSpeaker(speaker)})</span></label>`
       )).join('');
     }
 
     function renderTagButtons() {
       tagPicker.innerHTML = TAG_DEFINITIONS.map((tag) => (
-        `<label class="toggle"><input type="checkbox" data-tag="${tag.key}" ${state.selectedTags.includes(tag.key) ? 'checked' : ''}><span class="toggle-box" aria-hidden="true"></span><span>${escapeHtml(tag.label)}</span></label>`
+        `<label class="toggle"><input type="checkbox" data-tag="${tag.key}" ${state.selectedTags.includes(tag.key) ? 'checked' : ''}><span class="toggle-box" aria-hidden="true"></span><span>${tagLabelMarkup(tag)}</span></label>`
       )).join('');
     }
 
@@ -1146,7 +1405,7 @@
     function renderPagination(totalPages) {
       const build = () => `
         <button type="button" class="page-button" data-page-nav="prev" ${state.page === 1 ? 'disabled' : ''}>上一页</button>
-        <span class="page-button active">第 ${state.page} / ${totalPages} 页</span>
+        <label class="page-button active page-jump">第 <input class="page-input" type="text" inputmode="numeric" pattern="[0-9]*" min="1" max="${totalPages}" value="${state.page}" aria-label="页码"> / ${totalPages} 页</label>
         <button type="button" class="page-button" data-page-nav="next" ${state.page === totalPages ? 'disabled' : ''}>下一页</button>
       `;
       paginationTop.innerHTML = totalPages > 1 ? build() : '';
@@ -1158,14 +1417,15 @@
       if (activeThaiPlayButton && !activeThaiPlayButton.isConnected) {
         activeThaiPlayButton = null;
       }
+      if (activeDonglanPlayButton && !activeDonglanPlayButton.isConnected) {
+        activeDonglanPlayButton = null;
+      }
       loadingState.classList.add('hidden');
 
       const filtered = state.words.filter(matches);
       const paginated = paginate(filtered);
-      const first = filtered.length ? paginated.start + 1 : 0;
-      const last = filtered.length ? paginated.start + paginated.items.length : 0;
-
-      resultsCopy.textContent = `当前显示第 ${first}-${last} 项，共 ${filtered.length} 项匹配。`;
+      resultsCopy.textContent = '';
+      resultsCopy.parentElement.classList.add('hidden');
       renderSpeakerButtons();
       renderTagButtons();
       renderViewButtons();
@@ -1189,7 +1449,6 @@
       state.speakerOrder = Object.keys(audioManifest);
       state.selectedSpeakers = [];
       state.selectedTags = [];
-      state.activeWordSpeakers = {};
       state.loaded = true;
       render();
     }
@@ -1225,16 +1484,20 @@
       if (thaiAudioPlayer.ended) return;
       clearActiveThaiPlayButton();
     });
+    donglanAudioPlayer.addEventListener('ended', clearActiveDonglanPlayButton);
+    donglanAudioPlayer.addEventListener('pause', () => {
+      if (donglanAudioPlayer.ended) return;
+      clearActiveDonglanPlayButton();
+    });
     document.addEventListener('click', (event) => {
       const thaiAudioButton = event.target.closest('button[data-thai-audio]');
       if (thaiAudioButton) {
         playModernThaiAudio(thaiAudioButton.dataset.thaiAudio, thaiAudioButton);
         return;
       }
-      const speakerButton = event.target.closest('button[data-speaker-switch]');
-      if (speakerButton) {
-        state.activeWordSpeakers[speakerButton.dataset.wordId] = speakerButton.dataset.speakerSwitch;
-        render();
+      const donglanAudioButton = event.target.closest('button[data-donglan-audio]');
+      if (donglanAudioButton) {
+        playDonglanAudio(donglanAudioButton.dataset.donglanAudio, donglanAudioButton);
         return;
       }
       const pageButton = event.target.closest('button[data-page-nav]');
@@ -1243,6 +1506,25 @@
         render();
         window.scrollTo({ top: document.querySelector('.panel').offsetTop - 12, behavior: 'smooth' });
       }
+    });
+    document.addEventListener('change', (event) => {
+      const pageInput = event.target.closest('.page-input');
+      if (!pageInput) return;
+      const max = Number(pageInput.max) || 1;
+      const nextPage = Math.min(max, Math.max(1, Number.parseInt(pageInput.value, 10) || state.page));
+      if (nextPage === state.page) {
+        pageInput.value = state.page;
+        return;
+      }
+      state.page = nextPage;
+      render();
+      window.scrollTo({ top: document.querySelector('.panel').offsetTop - 12, behavior: 'smooth' });
+    });
+    document.addEventListener('keydown', (event) => {
+      const pageInput = event.target.closest('.page-input');
+      if (!pageInput || event.key !== 'Enter') return;
+      event.preventDefault();
+      pageInput.blur();
     });
 
     window.addEventListener('DOMContentLoaded', boot);
