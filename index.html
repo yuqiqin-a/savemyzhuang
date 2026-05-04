@@ -790,6 +790,10 @@
             <div class="filter-heading">标签筛选</div>
             <div class="filter-line" id="tag-picker" aria-label="选择标签"></div>
           </div>
+          <div class="filter-group">
+            <div class="filter-heading">相似度筛选</div>
+            <div class="filter-line" id="similarity-picker" aria-label="选择相似度标签"></div>
+          </div>
         </div>
         <div class="filter-line">
           <div class="pagination" id="pagination-top"></div>
@@ -847,8 +851,11 @@
       { key: 'number', label: '数字', source: '数字', color: ['#5a4b1d', '#fff9e8', '#d9c57a'] },
       { key: 'classifier', label: '量词', source: '量词', color: ['#35528a', '#eef4ff', '#9bb4e0'] },
       { key: 'interrogative', label: '疑问代词', source: '疑问代词', color: ['#7a3045', '#fff0f2', '#d79aaa'] },
-      { key: 'body', label: '身体部位', source: '身体部位', color: ['#915227', '#fff4ee', '#dfad8b'] }
+      { key: 'body', label: '身体部位', source: '身体部位', color: ['#915227', '#fff4ee', '#dfad8b'] },
+      { key: 'thai-similar', label: '泰语相似', source: '泰语相似', color: ['#285f56', '#eef9f6', '#86c4b8'] },
+      { key: 'mandarin-similar', label: '汉语相似', source: '汉语相似', color: ['#7c3d30', '#fff2ee', '#d9998b'] }
     ];
+    const SIMILARITY_TAG_KEYS = new Set(['thai-similar', 'mandarin-similar']);
 
     const state = {
       words: [],
@@ -864,6 +871,7 @@
 
     const speakerPicker = document.getElementById('speaker-picker');
     const tagPicker = document.getElementById('tag-picker');
+    const similarityPicker = document.getElementById('similarity-picker');
     const viewPicker = document.getElementById('view-picker');
     const searchInput = document.getElementById('search-input');
     const cards = document.getElementById('cards');
@@ -1409,7 +1417,13 @@
     }
 
     function renderTagButtons() {
-      tagPicker.innerHTML = TAG_DEFINITIONS.map((tag) => (
+      tagPicker.innerHTML = TAG_DEFINITIONS.filter((tag) => !SIMILARITY_TAG_KEYS.has(tag.key)).map((tag) => (
+        `<label class="toggle"><input type="checkbox" data-tag="${tag.key}" ${state.selectedTags.includes(tag.key) ? 'checked' : ''}><span class="toggle-box" aria-hidden="true"></span><span>${tagLabelMarkup(tag)}</span></label>`
+      )).join('');
+    }
+
+    function renderSimilarityButtons() {
+      similarityPicker.innerHTML = TAG_DEFINITIONS.filter((tag) => SIMILARITY_TAG_KEYS.has(tag.key)).map((tag) => (
         `<label class="toggle"><input type="checkbox" data-tag="${tag.key}" ${state.selectedTags.includes(tag.key) ? 'checked' : ''}><span class="toggle-box" aria-hidden="true"></span><span>${tagLabelMarkup(tag)}</span></label>`
       )).join('');
     }
@@ -1446,6 +1460,7 @@
       resultsCopy.parentElement.classList.add('hidden');
       renderSpeakerButtons();
       renderTagButtons();
+      renderSimilarityButtons();
       renderViewButtons();
       renderPagination(paginated.totalPages);
       renderCards(paginated.items);
@@ -1485,6 +1500,18 @@
       render();
     });
     tagPicker.addEventListener('change', (event) => {
+      const input = event.target.closest('input[data-tag]');
+      if (!input) return;
+      const tag = input.dataset.tag;
+      if (input.checked) {
+        if (!state.selectedTags.includes(tag)) state.selectedTags.push(tag);
+      } else {
+        state.selectedTags = state.selectedTags.filter((item) => item !== tag);
+      }
+      state.page = 1;
+      render();
+    });
+    similarityPicker.addEventListener('change', (event) => {
       const input = event.target.closest('input[data-tag]');
       if (!input) return;
       const tag = input.dataset.tag;
